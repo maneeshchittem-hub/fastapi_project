@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Records Management System | EWB Edu Tech</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <div class="brand-badge">EWB</div>
+        <div class="brand-title">
+          <h1>Students Database System</h1>
+          <span>FastAPI • SQLite • Ollama AI Extension</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <a href="/docs" target="_blank" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Swagger API Docs
+        </a>
+        <button id="btnOpenAddModal" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add New Student
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Summary Metric Cards -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon blue">👥</div>
+          <div class="metric-data">
+            <span class="metric-label">Total Enrolled</span>
+            <h2 id="metricTotalStudents">0</h2>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon purple">📚</div>
+          <div class="metric-data">
+            <span class="metric-label">Active Courses</span>
+            <h2 id="metricTotalCourses">0</h2>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon green">🤖</div>
+          <div class="metric-data">
+            <span class="metric-label">Ollama AI Status</span>
+            <h2 id="metricAiStatus">Checking...</h2>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Assistant Section -->
+      <section class="card ai-card">
+        <div class="ai-header">
+          <div class="ai-header-title">
+            <span class="ai-badge">Ollama 3.2:1B Extension</span>
+            <h3>Natural Language Student Query</h3>
+            <p>Ask free-form questions grounded safely on SQLite records (no unrestricted SQL execution).</p>
+          </div>
+          <div id="aiStatusPill" class="status-pill checking">Checking Ollama...</div>
+        </div>
+
+        <div class="ai-prompts-bar">
+          <span class="prompts-label">Try asking:</span>
+          <button class="prompt-chip" data-q="How many students are there?">"How many students are there?"</button>
+          <button class="prompt-chip" data-q="List students born after 2005.">"List students born after 2005."</button>
+          <button class="prompt-chip" data-q="How many students are enrolled in Computer Science?">"How many in Computer Science?"</button>
+          <button class="prompt-chip" data-q="List all available courses and counts.">"List all courses & counts"</button>
+        </div>
+
+        <form id="aiQueryForm" class="ai-input-form">
+          <input type="text" id="aiInput" placeholder="Type a natural language question (e.g. 'List students born after 2005')..." required>
+          <button type="submit" id="btnAskAi" class="btn btn-ai">
+            <span>Ask AI</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
+
+        <div id="aiResponseBox" class="ai-response-box hidden">
+          <div class="ai-response-meta">
+            <span id="aiModelTag" class="model-tag">llama3.2:1b</span>
+            <span id="aiContextTag" class="context-tag">Grounded on records</span>
+          </div>
+          <div id="aiAnswerText" class="ai-answer-text"></div>
+        </div>
+      </section>
+
+      <!-- Students Table Section -->
+      <section class="card table-card">
+        <div class="table-toolbar">
+          <div class="search-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="searchInput" placeholder="Search by name, email, or phone...">
+          </div>
+
+          <div class="filters-group">
+            <select id="courseFilter">
+              <option value="">All Courses</option>
+            </select>
+
+            <select id="sortFilter">
+              <option value="id-asc">ID (Asc)</option>
+              <option value="id-desc">ID (Desc)</option>
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="date_of_birth-desc">Age (Youngest)</option>
+              <option value="date_of_birth-asc">Age (Oldest)</option>
+              <option value="enrollment_date-desc">Newest Enrollment</option>
+            </select>
+
+            <button id="btnResetFilters" class="btn btn-ghost" title="Reset Filters">Reset</button>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Student Name</th>
+                <th>Course</th>
+                <th>Date of Birth</th>
+                <th>Contact Info</th>
+                <th>Enrollment Date</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+              <tr>
+                <td colspan="7" class="loading-cell">Loading student records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Student Form Modal (Create / Edit) -->
+    <div id="studentModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="modalTitle">Add Student Record</h3>
+          <button id="btnCloseModal" class="btn-close">&times;</button>
+        </div>
+        <form id="studentForm">
+          <input type="hidden" id="studentIdInput">
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="formName">Full Name <span class="required">*</span></label>
+              <input type="text" id="formName" placeholder="e.g. Maya Patel" required minlength="2">
+            </div>
+
+            <div class="form-group">
+              <label for="formDob">Date of Birth <span class="required">*</span></label>
+              <input type="date" id="formDob" required>
+            </div>
+
+            <div class="form-group">
+              <label for="formEmail">Email Address <span class="required">*</span></label>
+              <input type="email" id="formEmail" placeholder="e.g. maya@example.com" required>
+            </div>
+
+            <div class="form-group">
+              <label for="formPhone">Contact Phone <span class="required">*</span></label>
+              <input type="tel" id="formPhone" placeholder="e.g. +91-9876543210" required>
+            </div>
+
+            <div class="form-group">
+              <label for="formCourse">Course / Program</label>
+              <input type="text" id="formCourse" placeholder="e.g. Computer Science">
+            </div>
+
+            <div class="form-group">
+              <label for="formEnrollment">Enrollment Date</label>
+              <input type="date" id="formEnrollment">
+            </div>
+
+            <div class="form-group full-width">
+              <label for="formAddress">Residential Address</label>
+              <input type="text" id="formAddress" placeholder="e.g. 102 Tech Park, Bangalore">
+            </div>
+          </div>
+
+          <div id="formErrorMessage" class="error-banner hidden"></div>
+
+          <div class="modal-footer">
+            <button type="button" id="btnCancelModal" class="btn btn-secondary">Cancel</button>
+            <button type="submit" id="btnSaveStudent" class="btn btn-primary">Save Student</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
